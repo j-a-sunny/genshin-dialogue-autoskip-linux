@@ -74,6 +74,66 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 
 ## Installation
 
+### NixOS / Nix (Flakes)
+
+Add to your `flake.nix`:
+
+```nix
+{
+  inputs.genshin-autoskip.url = "github:j-a-sunny/genshin-dialogue-autoskip-linux";
+  outputs = { self, nixpkgs, genshin-autoskip, ... }: {
+    # System-wide (NixOS configuration.nix)
+    nixosConfigurations.yourhost = nixpkgs.lib.nixosSystem {
+      modules = [
+        ({ pkgs, ... }: {
+          environment.systemPackages = [ genshin-autoskip.packages.x86_64-linux.default ];
+          # Required for uinput access
+          hardware.uinput.enable = true;
+          users.users.youruser.extraGroups = [ "input" ];
+        })
+        genshin-autoskip.nixosModules.default
+      ];
+    };
+    
+    # Or with home-manager
+    homeConfigurations.youruser = home-manager.lib.homeManagerConfiguration {
+      modules = [
+        ({ pkgs, ... }: {
+          home.packages = [ genshin-autoskip.packages.x86_64-linux.default ];
+        })
+        genshin-autoskip.homeManagerModules.default
+      ];
+    };
+  };
+}
+```
+
+Or install imperatively:
+
+```bash
+# With nix profile (user)
+nix profile install github:j-a-sunny/genshin-dialogue-autoskip-linux
+
+# With nix-shell (temporary)
+nix-shell -p genshin-autoskip --run "genshin-autoskip"
+
+# Build locally from this repo
+nix build .#genshin-autoskip
+./result/bin/genshin-autoskip
+```
+
+### Development Shell
+
+```bash
+# Enter dev environment with all dependencies
+nix develop
+
+# Or with direnv (add to .envrc)
+# use flake
+```
+
+### uv (pip-based, original method)
+
 ```bash
 uv sync
 ```
