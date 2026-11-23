@@ -15,7 +15,7 @@ in
     
     user = lib.mkOption {
       type = lib.types.str;
-      default = config.users.users.[builtins.getEnv "USER"].name or "user";
+      default = "user";
       description = "User that will run the autoskip service. Must be in the 'input' group.";
     };
     
@@ -87,7 +87,7 @@ in
     hardware.uinput.enable = true;
     
     # Add user to input group if not already
-    users.users.${cfg.user}.extraGroups = lib.mkForce (lib.unique (cfg.user.extraGroups ++ [ "input" ]));
+    users.users.${cfg.user}.extraGroups = lib.mkForce (lib.unique (config.users.users.${cfg.user}.extraGroups ++ [ "input" ]));
     
     # Create a systemd user service for running genshin-autoskip
     systemd.user.services.genshin-autoskip = {
@@ -112,7 +112,7 @@ in
         # Python path for pygobject
         GI_TYPELIB_PATH = "${pkgs.gobject-introspection}/lib/girepository-1.0:${pkgs.gtk3}/lib/girepository-1.0:${pkgs.glib}/lib/girepository-1.0";
         GST_PLUGIN_PATH = "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-ugly}/lib/gstreamer-1.0";
-        LD_LIBRARY_PATH = "${pkgs.xorg.libX11}/lib:${pkgs.glib}/lib:${pkgs.gtk3}/lib:${pkgs.cairo}/lib:${pkgs.pipewire}/lib:${pkgs.gst_all_1.gstreamer}/lib:${pkgs.gst_all_1.gst-plugins-base}/lib";
+        LD_LIBRARY_PATH = "${pkgs.libx11}/lib:${pkgs.glib}/lib:${pkgs.gtk3}/lib:${pkgs.cairo}/lib:${pkgs.pipewire}/lib:${pkgs.gst_all_1.gstreamer}/lib:${pkgs.gst_all_1.gst-plugins-base}/lib";
       };
       serviceConfig = {
         ExecStart = "${cfg.package}/bin/genshin-autoskip";

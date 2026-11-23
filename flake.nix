@@ -7,6 +7,30 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }:
+    let
+      # Default system for top-level outputs
+      defaultSystem = "x86_64-linux";
+      
+      # Base packages for evaluating nixos modules
+      basePkgs = import nixpkgs {
+        system = defaultSystem;
+        overlays = [ self.overlays.default ];
+      };
+      
+      # Import NixOS module (needs lib, pkgs from nixpkgs, not flake utils)
+      nixosModule = import ./nixos/module.nix {
+        lib = basePkgs.lib;
+        pkgs = basePkgs;
+        config = {}; # Empty config - will be provided during evaluation
+      };
+      
+      # Import home-manager module similarly
+      hmModule = import ./nixos/home-manager.nix {
+        lib = basePkgs.lib;
+        pkgs = basePkgs;
+        config = {}; # Empty config - will be provided during evaluation
+      };
+    in
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -32,7 +56,7 @@
           
           # Add runtime dependencies for development
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-            pkgs.xorg.libX11
+            pkgs.libx11
             pkgs.glib
             pkgs.gtk3
             pkgs.cairo
@@ -53,22 +77,16 @@
             echo "  uv run genshin-autoskip --dry-run  - Test without key presses"
           '';
         };
-        
-        # NixOS module
-        nixosModules.default = import ./nixos/module.nix {
-          inherit pkgs;
-          inherit (pkgs.lib) lib;
-        };
-        
-        # Home-manager module
-        homeManagerModules.default = import ./nixos/home-manager.nix {
-          inherit pkgs;
-          inherit (pkgs.lib) lib;
-        };
       }
     ) // {
       overlays.default = final: prev: {
         genshin-autoskip = final.callPackage ./. { };
       };
+      
+      # NixOS module
+      nixosModules.default = nixosModule;
+      
+      # Home-manager module
+      homeManagerModules.default = hmModule;
     };
 }
